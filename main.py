@@ -12,9 +12,12 @@ agents ={"base": BaseAgent, "random": BaseAgent, "ddpg": DDPGAgent}
 
 configuration = {
                 "min_episodes" : 100,
-                "max_episodes" : 1000,
-                "max_time" : 1000, 
-                "target_score" : 30.0,
+                "max_episodes" : 5000,
+                "max_time" : 2000, 
+                "eps_start" : 1.0,
+                "eps_end" : 0.01,
+                "eps_decay" : 0.990,
+                "target_score" : 0.5,
                 "agent" : {
                         "type" : "ddpg",
                         "buffer_size" : int(1e6),  # replay buffer size
@@ -24,25 +27,27 @@ configuration = {
                         "lr_critic" : 1e-4,               # learning rate 
                         "lr_actor" : 1e-3,               # learning rate 
                         "update_every" : 10,        # how often to update the network
-                        "actor" :{"layers": [{"type":"linear", "arguments": (33,128)},
+                        "actor" :{"layers": [{"type":"linear", "arguments": (24,128)},
                                              {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
                                              {"type":"linear", "arguments": (128,256)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (256,4)},
+                                             {"type":"linear", "arguments": (256,2)},
                                              {"type":"tanh", "arguments":()}]},
-                        "critic" :{"layers": [{"type":"linear", "arguments": (33,128)},
+                        "critic" :{"layers": [{"type":"linear", "arguments": (24,128)},
                                              {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (132,256)},
+                                             {"type":"linear", "arguments": (130,256)},
                                              {"type":"relu", "arguments":()},
                                              {"type":"linear", "arguments": (256,1)},
                                              {"type":"tanh", "arguments":()}]}
                                              }
 }
 
-env = RLEnvironment(file_name='Reacher_Windows_x86_64_20/Reacher.exe')
-num_agents = 1
+env = RLEnvironment(file_name='Tennis_Windows_x86_64/Tennis.exe')
+num_agents = 2
+state_size = 24
+action_size = 2
 
 env.print_env_info()
 
@@ -52,13 +57,14 @@ name = start_date.strftime("%Y%m%d_%H%M%S") + "_" + name
 model_path = 'output/model_' + name + '.pt'
 
 print(f"start:{start_date}")
-agent = DDPGAgent(state_size=33, action_size=4, num_agents = num_agents, seed=2, agent_configuration = configuration["agent"])
+agent = DDPGAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=2, agent_configuration = configuration["agent"])
 
 # it is possible to load previously trained neural networks by uncommenting the following line:
 # agent.load('results/checkpoint.pt')
 
 # run the actual training
-scores = env.train(agent, 100, configuration["max_episodes"], configuration["max_time"],
+scores = env.train(agent, configuration["min_episodes"], configuration["max_episodes"], configuration["max_time"],
+                configuration["eps_start"], configuration["eps_end"], configuration["eps_decay"],
                 configuration["target_score"],)
 
 # calculate the duration of the training
@@ -70,6 +76,8 @@ cur_result = {"name": name, "type":configuration["agent"]["type"],
                 "date": start_date.strftime("%Y-%m-%d %H:%M:%S"), "episodes" : len(scores),
                 "final_score" :  sum(scores[-100:])/len(scores[-100:]), "duration" : str(duration),
                 "scores": scores, "configuration": configuration, "model_path" : model_path}
+
+agent.save(path='results/checkpoint.pt')
 
 agent.save(path=model_path)
 

@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import json
+import os
 import copy
 from collections import namedtuple, deque
 
@@ -41,7 +43,7 @@ class DDPGAgent(BaseAgent):
         self.critic_target = QNetwork(state_size, action_size, seed, agent_configuration["critic"]["layers"]).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=self.lr_critic, weight_decay=0)
 
-        #Copy the weights from local to target networks
+        #Copy the weights from local to target networks. Value of 1.0 means it is a hard copy
         self.soft_update(self.critic_local, self.critic_target, 1)
         self.soft_update(self.actor_local, self.actor_target, 1)
         
@@ -52,6 +54,7 @@ class DDPGAgent(BaseAgent):
         self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
 
     def parse_agent_configuration(self, agent_configuration):
+        self.agent_configuration = agent_configuration
         self.buffer_size = agent_configuration["buffer_size"] if agent_configuration else None
         self.batch_size = agent_configuration["batch_size"] if agent_configuration else None
         self.gamma = agent_configuration["gamma"] if agent_configuration else None
@@ -71,7 +74,7 @@ class DDPGAgent(BaseAgent):
             experiences = self.memory.sample()
             self.learn(experiences, self.gamma)
 
-    def act(self, state, add_noise=True):
+    def act(self, state, add_noise=True, eps = 1.0):
         """Returns actions for given state as per current policy."""
 
         # create a pytorch tensor from the received numpy array
@@ -88,7 +91,16 @@ class DDPGAgent(BaseAgent):
         if add_noise:
             action += self.noise.sample()
         
-        # create a valid return value by keeping it between -1 and 1
+        # Epsilon-greedy action selection
+        if random.random() > eps:
+            return np.clip(action, -1, 1)
+        else:
+            #take a random action between -1 and 1
+            action = np.random.random(size=action.shape) * 2 - 1
+            # return np.random.rand(self.action_size) * 2 -1
+
+            
+        # # create a valid return value by keeping it between -1 and 1
         return np.clip(action, -1, 1)
 
     def reset(self):
@@ -161,6 +173,8 @@ class DDPGAgent(BaseAgent):
         torch.save(self.critic_local.state_dict(), path[:index]+'_critic_local'+path[index:])
         torch.save(self.actor_target.state_dict(), path[:index]+'_actor_target'+path[index:])
         torch.save(self.critic_target.state_dict(), path[:index]+'_critic_target'+path[index:])
+        with open(path.replace('.pt','_config.json'), 'w') as f:
+            json.dump(self.agent_configuration, f, indent=2) 
             
     def load(self, path='output/checkpoint.pt'):
         index = path.find('.pt')

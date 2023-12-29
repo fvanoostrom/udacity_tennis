@@ -42,7 +42,7 @@ class RLEnvironment(UnityEnvironment):
         state_size = len(state)
         print('States have length:', state_size)
 
-    def run_episode(self, agent, train_mode= True, max_t=1000): 
+    def run_episode(self, agent, train_mode= True, max_t=1000, eps = 1.0, exit_on_done = True): 
         self.reset(train_mode=train_mode) 
         # Get the states of all agents
         states = self.brain_info.vector_observations
@@ -52,7 +52,7 @@ class RLEnvironment(UnityEnvironment):
         agent.reset()
         # Loop over all timesteps until the max timestep is reached or the environment returns 'done'                                         
         for t in range(max_t):
-            actions = agent.act(states)
+            actions = agent.act(states, True, eps)
             self.brain_info = self.step(actions)[self.brain_name]
             # get the next_states, rewards, if the task is done from the environment
             # and increase the score with the last reward
@@ -60,39 +60,53 @@ class RLEnvironment(UnityEnvironment):
             rewards = self.brain_info.rewards
             dones = self.brain_info.local_done
             score += self.brain_info.rewards
-            
             # Let the agent step. This could trigger a training
             agent.step(states, actions, rewards, next_states, dones, t)
             # set the current states to the states received by the environment
             states = next_states
             # if any agent is done, exit
-            if np.any(dones):
+            if np.any(dones) and exit_on_done:
                 break
         return score
 
-    def train(self, agent, min_episodes = 100, max_episodes=2000, max_t=1000, target_score= 1.0 ):
+    def train(self, agent, min_episodes = 100, max_episodes=2000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995, target_score= 1.0 ):
+        """Deep Q-Learning.
+        
+        Params
+        ======
+            agent (agent): agent to use
+            min_episodes (int): minimum number of training episodes
+            max_episodes (int): maximum number of training episodes
+            max_t (int): maximum number of timesteps per episode
+            eps_start (float): starting value of epsilon, for epsilon-greedy action selection
+            eps_end (float): minimum value of epsilon
+            eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
+        """
+
         scores = []
         # A queue to keep only the last 100 episodes' scores
         scores_window = deque(maxlen=100)
+        eps = eps_start                    # initialize epsilon
         for i_episode in range(1, max_episodes+1):
 
-            score = self.run_episode(agent, train_mode=True, max_t=max_t)
+            score = self.run_episode(agent, train_mode=True, max_t=max_t, eps = eps)
             # calculate the mean of all running agents, and add them to the deque and scores
             score = score.mean()
             scores_window.append(score)
             scores.append(score)
+            eps = max(eps_end, eps_decay*eps) # decrease epsilon
 
             # compute mean of the last episodes of the window
             mean_score = np.mean(scores_window)
             
             # Print the mean of the last episode
-            print('\rEpisode {}\tScore: {:.2f}\tAverage Score: {:.2f}'.format(i_episode, score, mean_score), end="")
+            print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}'.format(i_episode, score, mean_score), end="")
 
             if i_episode % 100 == 0:
-                print('\rEpisode {}\tScore: {:.2f}\tAverage Score: {:.2f}'.format(i_episode, score, mean_score))
+                print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}'.format(i_episode, score, mean_score))
                 
             if i_episode >= min_episodes and mean_score >= target_score :
-                print('\rEnvironment solved in {} episodes, mean score: {:.2f}'.format(i_episode, mean_score))
+                print('\rEnvironment solved in {} episodes, mean score: {:.3f}'.format(i_episode, mean_score))
                 agent.save()
                 break
                 

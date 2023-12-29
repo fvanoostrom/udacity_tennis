@@ -7,6 +7,12 @@ Within this project we will implement a reinforcement learning agent. The goal o
 
 ![Trained agent][image1]
 
+# Improvements
+At first the agent was a copy from the reacher project. This resulted in the following gameplay in which the agents seemed to reach a local optimum
+
+To the eps was reintroduced
+
+
 # Architecture
 The architecture used is based on the architecture of the Pendulum exercise. This is a DDPG algorithm that uses deep learning to learn the right values. Within this architecture there is both an actor and a critic network. The first one for choosing the best action, and the second one for estimating the values of the action.
 

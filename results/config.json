@@ -1,0 +1,105 @@
+{
+      "min_episodes": 0,
+      "max_episodes": 1,
+      "max_time": 2000,
+      "eps_start": 1.0,
+      "eps_end": 0.01,
+      "eps_decay": 0.99,
+      "target_score": 0.5,
+      "agent": {
+        "type": "ddpg",
+        "buffer_size": 1000000,
+        "batch_size": 1024,
+        "gamma": 0.95,
+        "tau": 0.001,
+        "lr_critic": 0.0001,
+        "lr_actor": 0.001,
+        "update_every": 10,
+        "actor": {
+          "layers": [
+            {
+              "type": "linear",
+              "arguments": [
+                24,
+                128
+              ]
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                128,
+                256
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                256,
+                2
+              ]
+            },
+            {
+              "type": "tanh",
+              "arguments": []
+            }
+          ]
+        },
+        "critic": {
+          "layers": [
+            {
+              "type": "linear",
+              "arguments": [
+                24,
+                128
+              ]
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                130,
+                256
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                256,
+                1
+              ]
+            },
+            {
+              "type": "tanh",
+              "arguments": []
+            }
+          ]
+        }
+      }
+    }
