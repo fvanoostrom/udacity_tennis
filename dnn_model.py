@@ -28,6 +28,7 @@ class QNetwork(nn.Module):
         """
         super(QNetwork, self).__init__()
         self.seed = torch.manual_seed(seed)
+        self.configuration = layers
         self.layers = nn.ModuleList()
 
         for layer in layers:
@@ -36,9 +37,12 @@ class QNetwork(nn.Module):
         self.reset_parameters()
         
     def reset_parameters(self):
-        for layer in self.layers:
+        for layer, configuration in zip(self.layers, self.configuration):
             if hasattr(layer, 'weight'):
-                layer.weight.data.normal_(*hidden_init(layer))
+                if 'initial_weight' in configuration.keys():
+                    layer.weight.data.uniform_(*configuration['initial_weight'])
+                else:
+                    layer.weight.data.uniform_(*hidden_init(layer))
 
 
     def forward(self, state, action = None):
@@ -46,7 +50,7 @@ class QNetwork(nn.Module):
         data = state
         for idx, layer in enumerate(self.layers):
             # for the critic the actions are added
-            if idx == 3 and action is not None:
+            if idx == 2 and action is not None:
                 data = torch.cat((data, action), dim=1)
             data = layer(data)
         # return output between -1 and 1

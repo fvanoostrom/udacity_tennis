@@ -8,6 +8,7 @@ from collections import namedtuple, deque
 from dnn_model import QNetwork
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -48,7 +49,7 @@ class DDPGAgent(BaseAgent):
         self.soft_update(self.actor_local, self.actor_target, 1)
         
         # Noise process
-        self.noise = OUNoise((self.num_agents, self.action_size), seed)
+        self.noise = OUNoise(self.action_size, seed)
 
         # Replay memory
         self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
@@ -136,6 +137,7 @@ class DDPGAgent(BaseAgent):
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1) #clip gradients
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #

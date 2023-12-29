@@ -7,6 +7,7 @@ import numpy as np
 from rl_environment import RLEnvironment
 from base_agent import BaseAgent
 from ddpg_agent import DDPGAgent
+from magent import MAgent
 
 agents ={"base": BaseAgent, "random": BaseAgent, "ddpg": DDPGAgent}
 
@@ -28,19 +29,17 @@ configuration = {
                         "lr_actor" : 1e-3,               # learning rate 
                         "update_every" : 10,        # how often to update the network
                         "actor" :{"layers": [{"type":"linear", "arguments": (24,128)},
-                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
                                              {"type":"linear", "arguments": (128,256)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (256,2)},
+                                             {"type":"linear", "arguments": (256,2), "initial_weight":(-3e-3, 3e-3)},
                                              {"type":"tanh", "arguments":()}]},
                         "critic" :{"layers": [{"type":"linear", "arguments": (24,128)},
-                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
                                              {"type":"linear", "arguments": (130,256)},
                                              {"type":"relu", "arguments":()},
                                              {"type":"linear", "arguments": (256,1)},
-                                             {"type":"tanh", "arguments":()}]}
+                                             {"type":"tanh", "arguments":(), "initial_weight":(-3e-3, 3e-3)}]}
                                              }
 }
 
@@ -57,7 +56,7 @@ name = start_date.strftime("%Y%m%d_%H%M%S") + "_" + name
 model_path = 'output/model_' + name + '.pt'
 
 print(f"start:{start_date}")
-agent = DDPGAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=2, agent_configuration = configuration["agent"])
+agent = MAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=2, agent_configuration = configuration["agent"])
 
 # it is possible to load previously trained neural networks by uncommenting the following line:
 # agent.load('results/checkpoint.pt')
