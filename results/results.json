@@ -1,0 +1,172 @@
+[
+  {
+    "name": "20240107_183236_batch_1024_g099_tau1e-2_lr_1e-3_updateevery_5_layers_128_128",
+    "type": "ddpg",
+    "date": "2024-01-07 18:32:36",
+    "episodes": 30,
+    "final_score": 0.0,
+    "duration": "0:00:05.316844",
+    "scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "configuration": {
+      "min_episodes": 10,
+      "max_episodes": 30,
+      "max_time": 2000,
+      "eps_start": 0.0,
+      "eps_end": 0.0,
+      "eps_decay": 0.99,
+      "target_score": 0.5,
+      "agent": {
+        "type": "ddpg",
+        "buffer_size": 1000000,
+        "batch_size": 1024,
+        "gamma": 0.99,
+        "tau": 0.01,
+        "lr_critic": 0.001,
+        "lr_actor": 0.001,
+        "update_every": 5,
+        "actor": {
+          "layers": [
+            {
+              "type": "linear",
+              "arguments": [
+                24,
+                128
+              ],
+              "initial_weight": null
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                128,
+                128
+              ],
+              "initial_weight": null
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                128,
+                2
+              ],
+              "initial_weight": [
+                -0.003,
+                0.003
+              ]
+            },
+            {
+              "type": "tanh",
+              "arguments": []
+            }
+          ]
+        },
+        "critic": {
+          "layers": [
+            {
+              "type": "linear",
+              "arguments": [
+                24,
+                128
+              ],
+              "initial_weight": null
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                130,
+                128
+              ],
+              "initial_weight": null
+            },
+            {
+              "type": "batchnorm",
+              "arguments": [
+                128
+              ]
+            },
+            {
+              "type": "relu",
+              "arguments": []
+            },
+            {
+              "type": "linear",
+              "arguments": [
+                128,
+                1
+              ],
+              "initial_weight": [
+                -0.003,
+                0.003
+              ]
+            },
+            {
+              "type": "tanh",
+              "arguments": []
+            }
+          ]
+        }
+      }
+    },
+    "model_path": "output/model_20240107_183236_batch_1024_g099_tau1e-2_lr_1e-3_updateevery_5_layers_128_128.pt"
+  }
+]

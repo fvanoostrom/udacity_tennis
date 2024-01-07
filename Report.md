@@ -8,9 +8,17 @@ Within this project we will implement a reinforcement learning agent. The goal o
 ![Trained agent][image1]
 
 # Improvements
-At first the agent was a copy from the reacher project. This resulted in the following gameplay in which the agents seemed to reach a local optimum
+At first the agent was a copy from the reacher project. After some small adjustments this resulted in the following gameplay in which the agents seemed to reach a local optimum. This optimum was to avoid the ball alltogether. 
 
-To the eps was reintroduced
+
+
+- To the eps was reintroduced
+- lowering the discount factor from 0.95 to 0.99
+- The model seemed to learn too slow. Therefore, the update frequency (after how many timesteps the model should be retrained) was set from once every 10 to every timestep. This however resulted in very long runtimes. Instead of updating the model more frequent, the learning rates where increased by a tenfold (from 1e4 to 1e3) and update frequency was again set to once every 10 timesteps. This resulted in lower running times.
+- increasing the learning rate
+- increasing the tau
+- after some more debugging it was found that the weights of the actor did not change.
+
 
 
 # Architecture

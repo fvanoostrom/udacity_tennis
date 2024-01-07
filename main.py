@@ -5,41 +5,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rl_environment import RLEnvironment
-from base_agent import BaseAgent
-from ddpg_agent import DDPGAgent
 from magent import MAgent
 
-agents ={"base": BaseAgent, "random": BaseAgent, "ddpg": DDPGAgent}
-
 configuration = {
-                "min_episodes" : 100,
-                "max_episodes" : 5000,
+                "min_episodes" : 10,
+                "max_episodes" : 30,
                 "max_time" : 2000, 
-                "eps_start" : 1.0,
-                "eps_end" : 0.01,
+                "eps_start" : 0.0,
+                "eps_end" : 0.00,
                 "eps_decay" : 0.990,
                 "target_score" : 0.5,
                 "agent" : {
                         "type" : "ddpg",
                         "buffer_size" : int(1e6),  # replay buffer size
-                        "batch_size" : 1024,         # minibatch size
-                        "gamma" : 0.95,            # discount factor
-                        "tau" : 1e-3,              # for soft update of target parameters
-                        "lr_critic" : 1e-4,               # learning rate 
-                        "lr_actor" : 1e-3,               # learning rate 
-                        "update_every" : 10,        # how often to update the network
-                        "actor" :{"layers": [{"type":"linear", "arguments": (24,128)},
+                        "batch_size" : 1024,       # minibatch size
+                        "gamma" : 0.99,            # discount factor
+                        "tau" : 1e-2,              # for soft update of target parameters
+                        "lr_critic" : 1e-3,        # learning rate critic
+                        "lr_actor" : 1e-3,         # learning rate actor
+                        "update_every" : 5,        # how often to update the network
+                        "actor" :{"layers": [{"type":"linear", "arguments": (24,128), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (128,256)},
+                                             {"type":"linear", "arguments": (128,128), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (256,2), "initial_weight":(-3e-3, 3e-3)},
+                                             {"type":"linear", "arguments": (128,2), "initial_weight":(-3e-3, 3e-3)},
                                              {"type":"tanh", "arguments":()}]},
-                        "critic" :{"layers": [{"type":"linear", "arguments": (24,128)},
+                        "critic" :{"layers": [{"type":"linear", "arguments": (24,128), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (130,256)},
+                                             {"type":"linear", "arguments": (130,128), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (256,1)},
-                                             {"type":"tanh", "arguments":(), "initial_weight":(-3e-3, 3e-3)}]}
+                                             {"type":"linear", "arguments": (128,1), "initial_weight":(-3e-3, 3e-3)},
+                                             {"type":"tanh", "arguments":()}]}
                                              }
 }
 
@@ -48,15 +48,14 @@ num_agents = 2
 state_size = 24
 action_size = 2
 
-env.print_env_info()
-
 start_date = datetime.now()
-name = "linear_batchnorm_relu_128_256"
+name = "batch_1024_g099_tau1e-2_lr_1e-3_updateevery_5_layers_128_128"
 name = start_date.strftime("%Y%m%d_%H%M%S") + "_" + name
 model_path = 'output/model_' + name + '.pt'
 
 print(f"start:{start_date}")
-agent = MAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=2, agent_configuration = configuration["agent"])
+
+agent = MAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=3, agent_configuration = configuration["agent"])
 
 # it is possible to load previously trained neural networks by uncommenting the following line:
 # agent.load('results/checkpoint.pt')
@@ -81,12 +80,12 @@ agent.save(path='results/checkpoint.pt')
 agent.save(path=model_path)
 
 # save the result of the current run
-with open("output/results_"+ name + ".json", 'w') as f:
+with open("results/results_"+ name + ".json", 'w') as f:
     json.dump(cur_result, f, indent=2) 
 
 # open all previous results
-if os.path.isfile("output/results.json"):
-    with open("output/results.json", 'r') as f:
+if os.path.isfile("results/results.json"):
+    with open("results/results.json", 'r') as f:
         results = json.load(f)
 # if it does not exist create an empty array
 else:
@@ -94,7 +93,7 @@ else:
 
 # save results with the current result appended
 results.append(cur_result)
-with open("output/results.json", 'w') as f:
+with open("results/results.json", 'w') as f:
     json.dump(results, f, indent=2)
 
 

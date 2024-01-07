@@ -2,6 +2,7 @@ from unityagents import UnityEnvironment
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 from ddpg_agent import DDPGAgent
 
@@ -42,7 +43,7 @@ class RLEnvironment(UnityEnvironment):
         state_size = len(state)
         print('States have length:', state_size)
 
-    def run_episode(self, agent, train_mode= True, max_t=1000, eps = 1.0, exit_on_done = True): 
+    def run_episode(self, agent, train_mode= True, max_t=1000, eps = 0.0, exit_on_done = True): 
         self.reset(train_mode=train_mode) 
         # Get the states of all agents
         states = self.brain_info.vector_observations
@@ -87,26 +88,29 @@ class RLEnvironment(UnityEnvironment):
         # A queue to keep only the last 100 episodes' scores
         scores_window = deque(maxlen=100)
         eps = eps_start                    # initialize epsilon
+        window_start = datetime.now()
         for i_episode in range(1, max_episodes+1):
 
-            score = self.run_episode(agent, train_mode=True, max_t=max_t, eps = eps)
+            score = self.run_episode(agent, train_mode=True, max_t=max_t, eps=eps)
             # calculate the mean of all running agents, and add them to the deque and scores
-            score = score.mean()
+            score = np.max(score)
             scores_window.append(score)
             scores.append(score)
             eps = max(eps_end, eps_decay*eps) # decrease epsilon
 
             # compute mean of the last episodes of the window
             mean_score = np.mean(scores_window)
-            
+            max_score = np.max(scores_window)
             # Print the mean of the last episode
-            print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}'.format(i_episode, score, mean_score), end="")
+            duration = datetime.now() - window_start
+            print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}\tMax Score: {:.3f} \tduration: {}'.format(i_episode, score, mean_score, max_score, str(duration)[:-7]), end="")
 
             if i_episode % 100 == 0:
-                print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}'.format(i_episode, score, mean_score))
-                
+                print('\rEpisode {}\tScore: {:.3f}\tAverage Score: {:.3f}\tMax Score: {:.3f} \tduration: {}'.format(i_episode, score, mean_score, max_score, str(duration)[:-7] ))
+                window_start = datetime.now()
+
             if i_episode >= min_episodes and mean_score >= target_score :
-                print('\rEnvironment solved in {} episodes, mean score: {:.3f}'.format(i_episode, mean_score))
+                print('\rEnvironment solved in {} episodes, mean score: {:.3f}\tMax Score: {:.3f} \ttime: {}'.format(i_episode, mean_score, max_score, datetime.now().strftime("%H:%M:%S") ))
                 agent.save()
                 break
                 

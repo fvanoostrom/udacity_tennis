@@ -27,7 +27,8 @@ class MAgent():
         self.agents = [DDPGAgent(state_size=state_size, action_size=action_size, num_agents = num_agents, seed=seed, agent_configuration= agent_configuration)
  for idx in range(num_agents)]
         # Replay memory
-        self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
+        self.memory = PrioritizedReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
+        # self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
 
     def parse_agent_configuration(self, agent_configuration):
         self.agent_configuration = agent_configuration
@@ -54,7 +55,7 @@ class MAgent():
         """Returns actions for given state as per current policy."""
         actions = []
         for state, agent in zip(states, self.agents):
-            action = agent.act(state, add_noise, eps)
+            action = agent.act(state, add_noise)
             actions.append(action)
         return actions
 
@@ -74,8 +75,23 @@ class MAgent():
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples 
             gamma (float): discount factor
         """
-        for agent in self.agents:
-            agent.learn(experiences, gamma)
+        if isinstance(self.memory, PrioritizedReplayBuffer):
+            _, _, indices = experiences
+            td_errors = []
+            losses = []
+            for agent in self.agents:
+                td_error, loss = agent.learn(experiences, gamma)
+                td_errors.append(td_error)
+                losses.append(loss)
+            avg_td_error = np.mean(np.array(td_errors), axis = 0)
+            avg_loss = np.mean(np.array(losses), axis = 0)
+            self.memory.set_priorities(indices, avg_td_error)
+        else:
+            for agent in self.agents:
+                agent.learn(experiences, gamma)
+
+        
+
 
     def save(self, path='output/checkpoint.pt'):
         for idx, agent in enumerate(self.agents):
@@ -139,8 +155,55 @@ class ReplayBuffer:
         next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
         dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
 
-        return (states, actions, rewards, next_states, dones)
+        return (states, actions, rewards, next_states, dones), None, None
 
     def __len__(self):
         """Return the current size of internal memory."""
         return len(self.memory)
+
+        
+class PrioritizedReplayBuffer(ReplayBuffer):
+    def __init__(self, action_size, buffer_size, batch_size, seed):
+        super().__init__(action_size, buffer_size, batch_size, seed)
+        self.priorities = deque(maxlen=buffer_size)
+        self.default_priority = 0.2
+        self.default_offset = 0.02
+        
+    def add(self, state, action, reward, next_state, done):
+        e = self.experience(state, action, reward, next_state, done)
+        self.memory.append(e)
+        self.priorities.append(self.default_priority)
+        
+    def get_probabilities(self, priority_scale):
+        scaled_priorities = np.array(self.priorities) ** priority_scale
+        sample_probabilities = scaled_priorities / sum(scaled_priorities)
+        return sample_probabilities
+    
+    def get_importance(self, probabilities):
+        importance = 1/len(self.memory) * 1/probabilities
+        importance_normalized = importance / max(importance)
+        return importance_normalized
+        
+    def sample(self, priority_scale=1.0):
+        sample_size = min(len(self.memory), self.batch_size)
+        sample_probs = self.get_probabilities(priority_scale)
+        sample_indices = random.choices(range(len(self.memory)), k=sample_size, weights=sample_probs)
+        # samples = np.array(self.memory)[sample_indices]
+
+        # experiences = self.memory[sample_indices]
+        experiences =  [self.memory[i] for i in sample_indices]
+        
+        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
+        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
+
+        importance = self.get_importance(sample_probs[sample_indices])
+        return (states, actions, rewards, next_states, dones), importance, sample_indices
+    
+    def set_priorities(self, indices, errors, offset=None):
+        offset = offset if offset is not None else self.default_offset
+        for i,e in zip(indices, errors):
+            self.priorities[i] = abs(np.mean(e)) + offset
+        self.default_priority = max(self.priorities, default= self.default_priority)

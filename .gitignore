@@ -1,5 +1,6 @@
 /Tennis_Windows_x86_64
 /unity-environment.log
 /__pycache__
+/output_archive
 /output/*
 !/output/results.json

@@ -2,17 +2,24 @@
   "type": "ddpg",
   "buffer_size": 1000000,
   "batch_size": 1024,
-  "gamma": 0.95,
-  "tau": 0.001,
-  "lr_critic": 0.0001,
+  "gamma": 0.99,
+  "tau": 0.01,
+  "lr_critic": 0.001,
   "lr_actor": 0.001,
-  "update_every": 10,
+  "update_every": 5,
   "actor": {
     "layers": [
       {
         "type": "linear",
         "arguments": [
           24,
+          128
+        ],
+        "initial_weight": null
+      },
+      {
+        "type": "batchnorm",
+        "arguments": [
           128
         ]
       },
@@ -24,7 +31,14 @@
         "type": "linear",
         "arguments": [
           128,
-          256
+          128
+        ],
+        "initial_weight": null
+      },
+      {
+        "type": "batchnorm",
+        "arguments": [
+          128
         ]
       },
       {
@@ -34,8 +48,12 @@
       {
         "type": "linear",
         "arguments": [
-          256,
+          128,
           2
+        ],
+        "initial_weight": [
+          -0.003,
+          0.003
         ]
       },
       {
@@ -51,6 +69,13 @@
         "arguments": [
           24,
           128
+        ],
+        "initial_weight": null
+      },
+      {
+        "type": "batchnorm",
+        "arguments": [
+          128
         ]
       },
       {
@@ -61,7 +86,14 @@
         "type": "linear",
         "arguments": [
           130,
-          256
+          128
+        ],
+        "initial_weight": null
+      },
+      {
+        "type": "batchnorm",
+        "arguments": [
+          128
         ]
       },
       {
@@ -71,8 +103,12 @@
       {
         "type": "linear",
         "arguments": [
-          256,
+          128,
           1
+        ],
+        "initial_weight": [
+          -0.003,
+          0.003
         ]
       },
       {

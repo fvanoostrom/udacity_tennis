@@ -5,7 +5,7 @@ import os
 import copy
 from collections import namedtuple, deque
 
-from dnn_model import QNetwork
+from dnn_model import Actor, Critic
 
 import torch
 import torch.nn as nn
@@ -35,13 +35,13 @@ class DDPGAgent(BaseAgent):
 
 
         # Actor Network (w/ Target Network)
-        self.actor_local = QNetwork(state_size, action_size, seed, agent_configuration["actor"]["layers"]).to(device)
-        self.actor_target = QNetwork(state_size, action_size, seed, agent_configuration["actor"]["layers"]).to(device)
+        self.actor_local = Actor(state_size, action_size, seed, agent_configuration["actor"]["layers"]).to(device)
+        self.actor_target = Actor(state_size, action_size, seed, agent_configuration["actor"]["layers"]).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=self.lr_actor)
 
         # Critic Network (w/ Target Network)
-        self.critic_local = QNetwork(state_size, action_size, seed, agent_configuration["critic"]["layers"]).to(device)
-        self.critic_target = QNetwork(state_size, action_size, seed, agent_configuration["critic"]["layers"]).to(device)
+        self.critic_local = Critic(state_size, action_size, seed, agent_configuration["critic"]["layers"]).to(device)
+        self.critic_target = Critic(state_size, action_size, seed, agent_configuration["critic"]["layers"]).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=self.lr_critic, weight_decay=0)
 
         #Copy the weights from local to target networks. Value of 1.0 means it is a hard copy
@@ -75,7 +75,7 @@ class DDPGAgent(BaseAgent):
             experiences = self.memory.sample()
             self.learn(experiences, self.gamma)
 
-    def act(self, state, add_noise=True, eps = 1.0):
+    def act(self, state, add_noise=True, eps = 0.0):
         """Returns actions for given state as per current policy."""
 
         # create a pytorch tensor from the received numpy array
@@ -107,7 +107,7 @@ class DDPGAgent(BaseAgent):
     def reset(self):
         self.noise.reset()
 
-    def learn(self, experiences, gamma):
+    def learn(self, experiences, gamma, weights = None):
         """Update policy and value parameters using given batch of experience tuples.
         Q_targets = r + γ * critic_target(next_state, actor_target(next_state))
         where:
@@ -119,8 +119,8 @@ class DDPGAgent(BaseAgent):
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples 
             gamma (float): discount factor
         """
-                
-        states, actions, rewards, next_states, dones = experiences
+
+        (states, actions, rewards, next_states, dones), importance, sample_indices = experiences
 
         # ---------------------------- update critic ---------------------------- #
         # Get predicted next-state actions and Q values from target models       
@@ -133,6 +133,12 @@ class DDPGAgent(BaseAgent):
         Q_expected = self.critic_local(states, actions)
         # calculate the difference
         critic_loss = F.mse_loss(Q_expected, Q_targets)
+
+        #calculate td_error and loss to update Prioritized Replay Buffer
+        if weights is None:
+            weights = torch.ones_like(Q_expected)
+        td_error = torch.abs(Q_expected - Q_targets).detach().cpu().numpy()
+        loss = torch.mean((Q_expected - Q_targets)**2 * weights).item()
 
         # Minimize the loss
         self.critic_optimizer.zero_grad()
@@ -156,6 +162,8 @@ class DDPGAgent(BaseAgent):
         # ----------------------- update target networks ----------------------- #
         self.soft_update(self.critic_local, self.critic_target, self.tau)
         self.soft_update(self.actor_local, self.actor_target, self.tau)
+
+        return td_error, loss
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.

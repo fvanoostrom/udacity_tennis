@@ -14,10 +14,10 @@ def hidden_init(layer):
     lim = 1. / np.sqrt(fan_in)
     return (-lim, lim)
 
-class QNetwork(nn.Module):
+class Network(nn.Module):
     """Actor (Policy) Model."""
 
-    def __init__(self, state_size, action_size, seed, layers):
+    def __init__(self, state_size, action_size, seed, configuration):
         """Initialize parameters and build model.
         Params
         ======
@@ -26,20 +26,20 @@ class QNetwork(nn.Module):
             seed (int): cd p1_naviRandom seed
             layers: configuration of layers
         """
-        super(QNetwork, self).__init__()
+        super(Network, self).__init__()
         self.seed = torch.manual_seed(seed)
-        self.configuration = layers
+        self.configuration = configuration
         self.layers = nn.ModuleList()
 
-        for layer in layers:
-            self.layers.append(layer_type[layer["type"]](*layer["arguments"]))
+        for config in configuration:
+            self.layers.append(layer_type[config["type"]](*config["arguments"]))
 
         self.reset_parameters()
         
     def reset_parameters(self):
         for layer, configuration in zip(self.layers, self.configuration):
-            if hasattr(layer, 'weight'):
-                if 'initial_weight' in configuration.keys():
+            if 'initial_weight' in configuration.keys():
+                if configuration['initial_weight'] is not None:
                     layer.weight.data.uniform_(*configuration['initial_weight'])
                 else:
                     layer.weight.data.uniform_(*hidden_init(layer))
@@ -47,12 +47,56 @@ class QNetwork(nn.Module):
 
     def forward(self, state, action = None):
         """Build a network that maps state -> action values."""
+        
+        # if state has 1 dim, unsqueeze it
+        if state.dim() == 1:
+            state = torch.unsqueeze(state, 0)
+
         data = state
-        for idx, layer in enumerate(self.layers):
-            # for the critic the actions are added
-            if idx == 2 and action is not None:
+        for layer in self.layers:
+            data = layer(data)
+        return data
+
+class Actor(Network):
+    """Actor (Policy) Model."""
+
+    def __init__(self, state_size, action_size, seed, layers):
+        """Initialize parameters and build model.
+        Params
+        ======
+            state_size (int): Dimension of each state
+            action_size (int): Dimension of each action
+            seed (int): Random seed
+            layers: configuration of layers
+        """
+        super().__init__(state_size, action_size, seed, layers)
+        
+        
+
+class Critic(Network):
+    """Critic (Policy) Model."""
+
+    def __init__(self, state_size, action_size, seed, layers):
+        """Initialize parameters and build model.
+        Params
+        ======
+            state_size (int): Dimension of each state
+            action_size (int): Dimension of each action
+            seed (int): Random seed
+            layers: configuration of layers
+        """
+        super().__init__(state_size, action_size, seed, layers)
+
+    def forward(self, state, action = None):
+        """Build a network that maps state -> action values."""
+        # if state has 1 dim, unsqueeze it
+        if state.dim() == 1:
+            state = torch.unsqueeze(state, 0)
+        data = state
+
+        for layer in self.layers:
+            #if the sizes between the input and required input are different we will add the actions to it:
+            if hasattr(layer,'in_features') and layer.in_features != data.shape[1]:
                 data = torch.cat((data, action), dim=1)
             data = layer(data)
-        # return output between -1 and 1
-        # data = (data * 2) - 1
         return data
