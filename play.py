@@ -12,6 +12,6 @@ env = RLEnvironment(file_name='Tennis_Windows_x86_64/Tennis.exe')
 num_agents = 2
 
 agent = MAgent(state_size=24, action_size=2, num_agents = num_agents, seed=2, agent_configuration = configuration)
-agent.load('outpu/checkpoint.pt')
+agent.load('results/checkpoint.pt')
 env.run_episode(agent, train_mode = False, eps = 0.6, exit_on_done = False)
 env.close()

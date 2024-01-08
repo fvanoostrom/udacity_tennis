@@ -8,17 +8,21 @@ Within this project we will implement a reinforcement learning agent. The goal o
 ![Trained agent][image1]
 
 # Improvements
-At first the agent was a copy from the reacher project. After some small adjustments this resulted in the following gameplay in which the agents seemed to reach a local optimum. This optimum was to avoid the ball alltogether. 
-
-
+At first the agent was a copy from the reacher project. After some small adjustments this resulted in the following gameplay in which the agents seemed to not learn anything at all. It seemed to just avoid the ball alltogether. 
 
 - To the eps was reintroduced
 - lowering the discount factor from 0.95 to 0.99
 - The model seemed to learn too slow. Therefore, the update frequency (after how many timesteps the model should be retrained) was set from once every 10 to every timestep. This however resulted in very long runtimes. Instead of updating the model more frequent, the learning rates where increased by a tenfold (from 1e4 to 1e3) and update frequency was again set to once every 10 timesteps. This resulted in lower running times.
 - increasing the learning rate
 - increasing the tau
+
+Prioritized Experience Replay
+In order to speed up the training a version of Prioritized Experience Replay was implemented. There exist multiple versions of implementing this. This version was inspired by the work of [the-computer-scientist](https://github.com/the-computer-scientist/OpenAIGym/blob/master/PrioritizedExperienceReplayInOpenAIGym.ipynb) ([youtube](https://www.youtube.com/watch?v=MqZmwQoOXw4&ab_channel=TheComputerScientist)). Within this implementation a default importance is given to each new experience. During training this importance is updated by calculting the TD error. This is the difference between expected value of the (local) critic and the received reward and the expected value of the next state (as calculated by the target actor and critic). When the importance is high the experience is more likely to be used later on during another training run.
+
+
 - after some more debugging it was found that the weights of the actor did not change.
 
+Further hyperparameter changes to reduce training time at cost of episodes
 
 
 # Architecture

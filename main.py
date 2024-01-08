@@ -9,15 +9,15 @@ from magent import MAgent
 
 configuration = {
                 "min_episodes" : 10,
-                "max_episodes" : 30,
-                "max_time" : 2000, 
+                "max_episodes" : 2000,
+                "max_time" : 3000, 
                 "eps_start" : 0.0,
                 "eps_end" : 0.00,
                 "eps_decay" : 0.990,
-                "target_score" : 0.5,
+                "target_score" : 1.0,
                 "agent" : {
                         "type" : "ddpg",
-                        "buffer_size" : int(1e6),  # replay buffer size
+                        "buffer_size" : int(1e5),  # replay buffer size
                         "batch_size" : 1024,       # minibatch size
                         "gamma" : 0.99,            # discount factor
                         "tau" : 1e-2,              # for soft update of target parameters
@@ -27,18 +27,18 @@ configuration = {
                         "actor" :{"layers": [{"type":"linear", "arguments": (24,128), "initial_weight": None},
                                              {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (128,128), "initial_weight": None},
-                                             {"type":"batchnorm", "arguments":(128,)},
+                                             {"type":"linear", "arguments": (128,256), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(256,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (128,2), "initial_weight":(-3e-3, 3e-3)},
+                                             {"type":"linear", "arguments": (256,2), "initial_weight":(-3e-3, 3e-3)},
                                              {"type":"tanh", "arguments":()}]},
                         "critic" :{"layers": [{"type":"linear", "arguments": (24,128), "initial_weight": None},
                                              {"type":"batchnorm", "arguments":(128,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (130,128), "initial_weight": None},
-                                             {"type":"batchnorm", "arguments":(128,)},
+                                             {"type":"linear", "arguments": (130,256), "initial_weight": None},
+                                             {"type":"batchnorm", "arguments":(256,)},
                                              {"type":"relu", "arguments":()},
-                                             {"type":"linear", "arguments": (128,1), "initial_weight":(-3e-3, 3e-3)},
+                                             {"type":"linear", "arguments": (256,1), "initial_weight":(-3e-3, 3e-3)},
                                              {"type":"tanh", "arguments":()}]}
                                              }
 }
@@ -49,7 +49,7 @@ state_size = 24
 action_size = 2
 
 start_date = datetime.now()
-name = "batch_1024_g099_tau1e-2_lr_1e-3_updateevery_5_layers_128_128"
+name = "batch_1024_g0990_tau1e-2_lr_1e-3_updateevery_5_layers_128_256"
 name = start_date.strftime("%Y%m%d_%H%M%S") + "_" + name
 model_path = 'output/model_' + name + '.pt'
 
@@ -73,7 +73,8 @@ duration = end_date - start_date
 cur_result = {"name": name, "type":configuration["agent"]["type"],
                 "date": start_date.strftime("%Y-%m-%d %H:%M:%S"), "episodes" : len(scores),
                 "final_score" :  sum(scores[-100:])/len(scores[-100:]), "duration" : str(duration),
-                "scores": scores, "configuration": configuration, "model_path" : model_path}
+                "configuration": configuration, "model_path" : model_path,
+                "scores": scores,}
 
 agent.save(path='results/checkpoint.pt')
 
@@ -111,7 +112,7 @@ results_displayed = sorted(results, key=lambda r: r['date'], reverse=True)[:5]
 cmap = plt.cm.get_cmap('hsv', len(results_displayed)+2)
 #plot these results by taking all the scores and calculating the moving average.
 for i, result in enumerate(results_displayed):
-    label = result['type'] + '_' + result['date'] if result.get('alias') is None else result['alias']
+    label = result['type'] + '_' + result['date'] if result.get('name') is None else result['name']
     plt.plot(calculate_moving_average(result['scores'],100), color=cmap(i+1), alpha=1.0, linestyle='--', label=label)
 plt.legend()
 plt.ylabel("Score")

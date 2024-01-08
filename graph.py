@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 
 
 # open all previous results
-if os.path.isfile("output/results.json"):
-    with open("output/results.json", 'r') as f:
+if os.path.isfile("results/results.json"):
+    with open("results/results.json", 'r') as f:
         results = json.load(f)
 # if it does not exist create an empty array
 else:

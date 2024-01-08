@@ -1,6 +1,6 @@
 {
   "type": "ddpg",
-  "buffer_size": 1000000,
+  "buffer_size": 100000,
   "batch_size": 1024,
   "gamma": 0.99,
   "tau": 0.01,
@@ -13,14 +13,14 @@
         "type": "linear",
         "arguments": [
           24,
-          128
+          64
         ],
         "initial_weight": null
       },
       {
         "type": "batchnorm",
         "arguments": [
-          128
+          64
         ]
       },
       {
@@ -30,15 +30,15 @@
       {
         "type": "linear",
         "arguments": [
-          128,
-          128
+          64,
+          64
         ],
         "initial_weight": null
       },
       {
         "type": "batchnorm",
         "arguments": [
-          128
+          64
         ]
       },
       {
@@ -48,7 +48,7 @@
       {
         "type": "linear",
         "arguments": [
-          128,
+          64,
           2
         ],
         "initial_weight": [
@@ -68,14 +68,14 @@
         "type": "linear",
         "arguments": [
           24,
-          128
+          64
         ],
         "initial_weight": null
       },
       {
         "type": "batchnorm",
         "arguments": [
-          128
+          64
         ]
       },
       {
@@ -85,15 +85,15 @@
       {
         "type": "linear",
         "arguments": [
-          130,
-          128
+          66,
+          64
         ],
         "initial_weight": null
       },
       {
         "type": "batchnorm",
         "arguments": [
-          128
+          64
         ]
       },
       {
@@ -103,7 +103,7 @@
       {
         "type": "linear",
         "arguments": [
-          128,
+          64,
           1
         ],
         "initial_weight": [
