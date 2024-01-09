@@ -1,8 +1,9 @@
 [//]: # (Image References)
 
 [image1]: results/trained_agent.gif "Trained Agents"
-[image2]: results/untrained_agent.gif "Untrained Agents"
-[image3]: results/results.png "Results of multiple training runs"
+[image2]: results/best_results.png "Results of best training run"
+[image3]: results/untrained_agent.gif "Untrained Agents"
+[image4]: results/results.png "Results of multiple training runs"
 
 Within this project we will implement a pair of reinforcement learning agents. The goal of these agents is to play tennis with each other. For an introduction and instructions to get this project to run please read the [README.md](README.md).
 
@@ -14,6 +15,10 @@ Within this project we will implement a pair of reinforcement learning agents. T
 The following is a description of the final architecture for the Tennis environment. In the next chapter it is explained how we got here. The solution consists of a multi-agent set-up in which two DPPG agents play against each other. Both share the same architecture: a pytorch neural network with two hidden layer and an output layer. The weights of their network are different. Furthermore, they make use of the same memory to train their networks and improve. This memory is a prioritized experience replay buffer, in which more importance is given to experiences that are currently not estimated correctly. There exist multiple versions of implementing this. This version was inspired by the work of [the-computer-scientist](https://github.com/the-computer-scientist/OpenAIGym/blob/master/PrioritizedExperienceReplayInOpenAIGym.ipynb) ([youtube](https://www.youtube.com/watch?v=MqZmwQoOXw4&ab_channel=TheComputerScientist)). Within this implementation a (high) default importance is given to each new experience. During training this importance is updated by calculting the TD error. This is the difference between expected value of the (local) critic and the received reward and the expected value of the next state (as calculated by the target actor and critic). When the importance is high, the experience is more likely to be picked during the next training phase.
 
 The DDPG is an algorithm that uses an actor and a critic network. The actor is responsibe for choosing the best action. The critic is responsible for estimating the value of a state/action pair.
+
+The solution is able to solve the goal in 977 episodes:
+
+![Best result][image2]
 
 # Architecture Neural Network
 The agent makes use of a pytorch deep neural network with two hidden layers for all it's networks (local actor, target actor, local critic, local actor). By default we use [ReLU](https://www.kaggle.com/code/dansbecker/rectified-linear-units-relu-in-deep-learning) activation function, and a [batchnorm layer](https://towardsdatascience.com/batch-norm-explained-visually-how-it-works-and-why-neural-networks-need-it-b18919692739) to normalize the outputs and speed up learning.
@@ -83,7 +88,7 @@ The following table gives an overview of the used hyperparameters. The values in
 # Improvements
 At first the agent was a copy from the reacher project. After some small adjustments this resulted in the following gameplay in which the agents seemed to not learn anything at all. 
 
-![Untrained agent][image2]
+![Untrained agent][image3]
 
 The following iterations were made during the development of the solution:
 - **reintroducing eps**: at first it seemed that the agents got stuck in a local optimum in which they just seemed to avoid the ball. Hence the eps was reintroduced to trigger new gameplay. This value is high at the beginning and low in the later phase of the training. At the beginning of the game the agent would therefor make more often random movements than later in the game. This however, did not seem to help. In stead of making random movements some of the time, the current algorith includes Ornstein–Uhlenbeck Noise: this adds some noise on top of the chosen values.
@@ -94,9 +99,9 @@ The following iterations were made during the development of the solution:
 - **debugging**: after some more debugging it was found that the weights of the actor did not change. It was concluded this was due to a bug in the code. The pytorch model is configured using a json configuration file that contained the layers and it's weights. During the forward pass the layers are iterated using the enumerate function. Pytorch does not 
 - **amount of layers**: finally different amounts of hidden layers were used. 128,128, 128,256 and 64,64. The first two versions hardly differ in terms of performance, but 64 layers seem to be a too small number.
 
-# Graph of results
-
-![Results][image3]
+# Graph of results of other training runs
+In the graph below the rolling averages of other experiments are displayed. Within these experiments the values of batch, gamma, learning rate, update frequency and layer size were altered. Within multiple experiments you can see the score collapsing after reaching a high score. After some time the scores seem to reach their previous high score, although it can take a while. The best performing set-up reached a score of 0.5 after 977 episodes. When it was copied it collapsed, only to return to a higher score after almost 2000 episodes.
+![Results][image4]
 
 # Ideas for Future Work
 The goal was to reach an average score of 0.5 over 100 consecutive episodes. This goal was reached. Another attempt was made to further increase the score. After 2000 episodes the agents received an only marginally better score: 0.53. To further increase the score other algorithms could be looked into.
