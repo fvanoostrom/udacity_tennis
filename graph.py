@@ -32,7 +32,7 @@ def calculate_moving_average(numbers, window_size):
 # plt.plot(calculate_moving_average(scores,100), color='red', label='current result')
 
 #filter the results on the 5 best final score (highest average of last 100 episodes) 
-results_displayed = sorted(results, key=lambda r: r['date'], reverse=True)[:8]
+results_displayed = sorted(sorted(results, key=lambda r: r['final_score'], reverse=True)[:7], key=lambda r: r['episodes'], reverse=False)
 cmap = plt.cm.get_cmap('hsv', len(results_displayed)+2)
 #plot these results by taking all the scores and calculating the moving average.
 plt.figure(figsize=(12,10))

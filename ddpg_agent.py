@@ -51,8 +51,9 @@ class DDPGAgent(BaseAgent):
         # Noise process
         self.noise = OUNoise(self.action_size, seed)
 
-        # Replay memory
-        self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
+        #The memory is not used since we make use of the buffer of the multi agent
+        # # Replay memory
+        # self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
 
     def parse_agent_configuration(self, agent_configuration):
         self.agent_configuration = agent_configuration
@@ -64,16 +65,17 @@ class DDPGAgent(BaseAgent):
         self.lr_critic = agent_configuration["lr_critic"] if agent_configuration else None
         self.update_every = agent_configuration["update_every"] if agent_configuration else None
 
-    def step(self, states, actions, rewards, next_states, dones, step):
-        """Save experience in replay memory, and use random sample from buffer to learn."""
-        # save the experiences and rewards
-        for i in range(len(states)):
-            self.memory.add(states[i], actions[i], rewards[i], next_states[i], dones[i])
+#This function is not used since we make use of the step function of the multi agent
+    # def step(self, states, actions, rewards, next_states, dones, step):
+    #     """Save experience in replay memory, and use random sample from buffer to learn."""
+    #     # save the experiences and rewards
+    #     for i in range(len(states)):
+    #         self.memory.add(states[i], actions[i], rewards[i], next_states[i], dones[i])
 
-        # Learn, if enough samples are available in memory
-        if len(self.memory) > self.batch_size and (step % self.update_every) == 0 :
-            experiences = self.memory.sample()
-            self.learn(experiences, self.gamma)
+    #     # Learn, if enough samples are available in memory
+    #     if len(self.memory) > self.batch_size and (step % self.update_every) == 0 :
+    #         experiences = self.memory.sample()
+    #         self.learn(experiences, self.gamma)
 
     def act(self, state, add_noise=True, eps = 0.0):
         """Returns actions for given state as per current policy."""
@@ -100,7 +102,6 @@ class DDPGAgent(BaseAgent):
             action = np.random.random(size=action.shape) * 2 - 1
             # return np.random.rand(self.action_size) * 2 -1
 
-            
         # # create a valid return value by keeping it between -1 and 1
         return np.clip(action, -1, 1)
 
@@ -216,39 +217,40 @@ class OUNoise:
         self.state = x + dx
         return self.state
 
-class ReplayBuffer:
-    """Fixed-size buffer to store experience tuples."""
+#This class is not used since we make use of the buffer of the multi agent
+# class ReplayBuffer:
+#     """Fixed-size buffer to store experience tuples."""
 
-    def __init__(self, action_size, buffer_size, batch_size, seed):
-        """Initialize a ReplayBuffer object.
-        Params
-        ======
-            buffer_size (int): maximum size of buffer
-            batch_size (int): size of each training batch
-        """
-        self.action_size = action_size
-        self.memory = deque(maxlen=buffer_size)
-        self.batch_size = batch_size
-        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
-        self.seed = random.seed(seed)
+#     def __init__(self, action_size, buffer_size, batch_size, seed):
+#         """Initialize a ReplayBuffer object.
+#         Params
+#         ======
+#             buffer_size (int): maximum size of buffer
+#             batch_size (int): size of each training batch
+#         """
+#         self.action_size = action_size
+#         self.memory = deque(maxlen=buffer_size)
+#         self.batch_size = batch_size
+#         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
+#         self.seed = random.seed(seed)
     
-    def add(self, state, action, reward, next_state, done):
-        """Add a new experience to memory."""
-        e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
+#     def add(self, state, action, reward, next_state, done):
+#         """Add a new experience to memory."""
+#         e = self.experience(state, action, reward, next_state, done)
+#         self.memory.append(e)
     
-    def sample(self):
-        """Randomly sample a batch of experiences from memory."""
-        experiences = random.sample(self.memory, k=self.batch_size)
+#     def sample(self):
+#         """Randomly sample a batch of experiences from memory."""
+#         experiences = random.sample(self.memory, k=self.batch_size)
 
-        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
-        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
-        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
-        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
+#         states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
+#         actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
+#         rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
+#         next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
+#         dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
 
-        return (states, actions, rewards, next_states, dones)
+#         return (states, actions, rewards, next_states, dones)
 
-    def __len__(self):
-        """Return the current size of internal memory."""
-        return len(self.memory)
+#     def __len__(self):
+#         """Return the current size of internal memory."""
+#         return len(self.memory)

@@ -28,7 +28,6 @@ class MAgent():
  for idx in range(num_agents)]
         # Replay memory
         self.memory = PrioritizedReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
-        # self.memory = ReplayBuffer(action_size, self.buffer_size, self.batch_size, seed)
 
     def parse_agent_configuration(self, agent_configuration):
         self.agent_configuration = agent_configuration
@@ -90,9 +89,6 @@ class MAgent():
             for agent in self.agents:
                 agent.learn(experiences, gamma)
 
-        
-
-
     def save(self, path='output/checkpoint.pt'):
         for idx, agent in enumerate(self.agents):
             agent.save(path.replace('.pt',f'_{idx}.pt'))
@@ -100,29 +96,6 @@ class MAgent():
     def load(self, path='output/checkpoint.pt'):
         for idx, agent in enumerate(self.agents):
             agent.load(path.replace('.pt',f'_{idx}.pt'))
-
-
-class OUNoise:
-    """Ornstein-Uhlenbeck process."""
-
-    def __init__(self, shape, seed, mu=0., theta=0.15, sigma=0.08):
-        """Initialize parameters and noise process."""
-        self.mu = mu * np.ones(shape)
-        self.theta = theta
-        self.sigma = sigma
-        self.seed = random.seed(seed)
-        self.reset()
-
-    def reset(self):
-        """Reset the internal state (= noise) to mean (mu)."""
-        self.state = copy.copy(self.mu)
-
-    def sample(self):
-        """Update internal state and return it as a noise sample."""
-        x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * (np.random.rand(*x.shape)-0.5)
-        self.state = x + dx
-        return self.state
 
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""

@@ -14,7 +14,7 @@ configuration = {
                 "eps_start" : 0.0,
                 "eps_end" : 0.00,
                 "eps_decay" : 0.990,
-                "target_score" : 1.0,
+                "target_score" : 0.5,
                 "agent" : {
                         "type" : "ddpg",
                         "buffer_size" : int(1e5),  # replay buffer size
